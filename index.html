@@ -1,0 +1,88 @@
+<html>
+
+  <head>
+
+    <style> 
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+
+      #katamari {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+  </head>
+
+  <body>
+
+    <div id="katamari"></div>
+
+    <script src="kinetic.js"></script>
+
+    <script defer>
+      var stage = new Kinetic.Stage({
+        container: 'katamari',
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+
+      var Head = function(stage){
+
+        var width = stage.getWidth();
+        var height = stage.getHeight();
+
+        var layer = new Kinetic.Layer();
+        
+        var image = new Kinetic.Circle({
+          x: 0,
+          y: 0,
+          radius: 30,
+          fill: 'black'
+        });
+
+        var background = new Kinetic.Polygon({
+         points: [[40,0],[0,81],[80,81]],
+         fill: 'red',
+         offset: [40,54]
+        });
+
+        var dx = 5;
+        var dy = 10;
+        var r = 3;
+
+        var animation = new Kinetic.Animation(function(frame){
+          
+          var x = layer.getX();
+          var y = layer.getY();
+
+          if(x < 0 || x > width)  { dx = -dx; }
+          if(y < 0 || y > height) { dy = -dy; }
+
+          // rotate background image
+          background.rotate(frame.timeDiff * r / 1000);
+
+          // this should probably use frame.timeDiff
+          layer.move(dx, dy);
+
+        }, layer);
+
+        this.init = function(){
+          layer.add(background);
+          layer.add(image);
+          stage.add(layer);
+          animation.start();
+        }
+
+      };
+
+      var kingHead = new Head(stage);
+      kingHead.init();
+
+    </script>
+
+  </body>
+
+</html>
