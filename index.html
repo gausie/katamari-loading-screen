@@ -11,6 +11,7 @@
       #katamari {
         width: 100%;
         height: 100%;
+        background-color: black;
       }
     </style>
 
@@ -23,40 +24,108 @@
     <script src="kinetic.js"></script>
 
     <script defer>
-      var stage = new Kinetic.Stage({
-        container: 'katamari',
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+      
+      var Screen = function(container){
+        
+        var self = this;
 
-      var Head = function(stage){
+        var stage = new Kinetic.Stage({
+         container: container,
+         width: window.innerWidth,
+         height: window.innerHeight
+        });
+
+        this.getStage = function(){
+          return stage;
+        }
+
+        this.init = function(){
+          var kingHead = new Head(self);
+        }
+
+      }
+      
+      var Head = function(screen){
+
+        var self = this;
+
+        var stage = screen.getStage();
 
         var width = stage.getWidth();
         var height = stage.getHeight();
 
         var layer = new Kinetic.Layer();
-        
-        var image = new Kinetic.Circle({
+
+        var imageObj = new Image();
+        var image = new Kinetic.Image({
           x: 0,
           y: 0,
-          radius: 30,
-          fill: 'black'
+          width:56,
+          height: 100,
+          image: imageObj
         });
 
-        var background = new Kinetic.Polygon({
-         points: [[40,0],[0,81],[80,81]],
-         fill: 'red',
-         offset: [40,54]
+        var backgroundObj = new Image();
+        var background = new Kinetic.Image({
+         x: 25,
+         y: 50,
+         width: 100,
+         height: 100,
+         image: backgroundObj,
+         offset: [50,50]
         });
 
         var dx = 5;
         var dy = 10;
         var r = 3;
 
+        var group = new Kinetic.Group({
+          x: 0,
+          y: 0
+        });
+
+        var poop = [];
+
+        var cleanUp = function(){
+          for(var i=0;i<poop.length;i++){
+            if(poop[i].dead){
+              poop.splice(i,1);
+            }
+          }
+        }
+
+        var phrases = [
+          'Happy birthday to me!',
+          'Katamari, you say?',
+          'You could do better...'
+        ];
+
+        var lastLetter = [0,-1];
+
+        var nextLetter = function(){
+          if(lastLetter[1] > phrases[lastLetter[0]].length){
+            lastLetter = [lastLetter[0]+1,0];
+          }else{
+            lastLetter = [lastLetter[0],lastLetter[1]+1];
+          }
+          return phrases[lastLetter[0]].charAt(lastLetter[1]);
+        }
+
+        var doPoop = function(){
+
+          var delay = 500;
+
+          return setInterval(function(){
+            var newpoop = new Poop(self, nextLetter());
+            poop.push(newpoop);
+          },delay);
+
+        };
+
         var animation = new Kinetic.Animation(function(frame){
-          
-          var x = layer.getX();
-          var y = layer.getY();
+
+          var x = group.getX();
+          var y = group.getY();
 
           if(x < 0 || x > width)  { dx = -dx; }
           if(y < 0 || y > height) { dy = -dy; }
@@ -65,21 +134,85 @@
           background.rotate(frame.timeDiff * r / 1000);
 
           // this should probably use frame.timeDiff
-          layer.move(dx, dy);
+          group.move(dx, dy);
 
         }, layer);
 
-        this.init = function(){
-          layer.add(background);
-          layer.add(image);
-          stage.add(layer);
-          animation.start();
+        this.getAnimatedLayer = function(){
+          return layer;
         }
+
+        this.getX = function(){
+          return group.getX();
+        }
+
+        this.getY = function(){
+          return group.getY();
+        }
+
+        var init = function(){
+          imageObj.onload = function(){
+              group.add(background);
+              group.add(image);
+              layer.add(group);
+              stage.add(layer);
+              animation.start();
+              doPoop();
+          };
+          imageObj.src = 'head_small.png';
+          backgroundObj.src = 'background_small.png';
+        }
+
+        init();
 
       };
 
-      var kingHead = new Head(stage);
-      kingHead.init();
+      var Poop = function(head, character){
+
+        this.dead = false;
+
+        var layer = head.getAnimatedLayer();
+
+        var letter = new Kinetic.Text({
+          x: head.getX(),
+          y: head.getY(),
+          text: character,
+          fontSize: 30,
+          fontFamily: 'Arial',
+          fontStyle: 'bold',
+          fill: 'white'
+        });
+
+        dx = -1;
+        mult = 1.1;
+
+        var die = function(){
+          this.dead = true;
+          animation.stop;
+          letter.hide();
+        }
+
+        var animation = new Kinetic.Animation(function(frame){
+          if(letter.getX() >=0 ){
+            letter.move(dx,0);
+            dx = dx * mult;
+          }else{
+            die();
+          }
+        }, layer);
+
+        var init = function(){
+          layer.add(letter);
+          animation.start();
+        };
+
+        init();
+
+      }
+
+
+      var katamariLoader = new Screen('katamari');
+      katamariLoader.init();
 
     </script>
 
